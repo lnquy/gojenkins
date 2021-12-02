@@ -516,6 +516,36 @@ func (j *Job) Invoke(ctx context.Context, files []string, skipIfRunning bool, pa
 	return false, errors.New(strconv.Itoa(resp.StatusCode))
 }
 
+func (j *Job) InvokeWithQueries(ctx context.Context, skipIfRunning bool, queries map[string]string) (bool, error) {
+	isQueued, err := j.IsQueued(ctx)
+	if err != nil {
+		return false, err
+	}
+	if isQueued {
+		Error.Printf("%s is already running", j.GetName())
+		return false, nil
+	}
+	isRunning, err := j.IsRunning(ctx)
+	if err != nil {
+		return false, err
+	}
+	if isRunning && skipIfRunning {
+		return false, fmt.Errorf("Will not request new build because %s is already running", j.GetName())
+	}
+
+	base := "/buildWithParameters"
+	// If parameters are specified - url is /builWithParameters
+
+	resp, err := j.Jenkins.Requester.PostFiles(ctx, j.Base+base, nil, nil, queries, nil)
+	if err != nil {
+		return false, err
+	}
+	if resp.StatusCode == 200 || resp.StatusCode == 201 {
+		return true, nil
+	}
+	return false, errors.New(strconv.Itoa(resp.StatusCode))
+}
+
 func (j *Job) Poll(ctx context.Context) (int, error) {
 	response, err := j.Jenkins.Requester.GetJSON(ctx, j.Base, j.Raw, nil)
 	if err != nil {
