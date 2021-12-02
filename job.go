@@ -536,7 +536,7 @@ func (j *Job) InvokeWithQueries(ctx context.Context, skipIfRunning bool, queries
 	base := "/buildWithParameters"
 	// If parameters are specified - url is /builWithParameters
 
-	resp, err := j.Jenkins.Requester.PostFiles(ctx, j.Base+base, nil, nil, queries, nil)
+	resp, err := j.Jenkins.Requester.PostFiles(ctx, j.Base+base, bytes.NewBuffer([]byte{}), nil, queries, nil)
 	if err != nil {
 		return false, err
 	}
